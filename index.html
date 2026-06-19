@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Entry Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f7f6;
+        }
+        .container {
+            max-width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 { margin-top: 0; color: #333; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
+        select, textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea { height: 100px; font-family: monospace; }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        button:hover { background-color: #218838; }
+        .review-section {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Data Entry Form</h2>
+    
+    <label for="dateSelect">Select Date:</label>
+    <select id="dateSelect" onchange="updateReview()"></select>
+
+    <label for="sourceSelect">Source:</label>
+    <select id="sourceSelect" onchange="updateReview()">
+        <option value="Support">Support</option>
+        <option value="Contactus">Contactus</option>
+        <option value="Live chat">Live chat</option>
+        <option value="Call">Call</option>
+        <option value="Discord">Discord</option>
+    </select>
+
+    <label for="rawInput">Paste Raw Message:</label>
+    <textarea id="rawInput" placeholder="Test@gmail.com&#10;845640&#10;$155.00" oninput="parseData()"></textarea>
+
+    <div class="review-section">
+        <h3>Review & Edit Options</h3>
+        
+        <label for="reviewEmail">Email:</label>
+        <input type="text" id="reviewEmail" oninput="updateReview()">
+
+        <label for="reviewAccount">Trading Account:</label>
+        <input type="text" id="reviewAccount" oninput="updateReview()">
+
+        <label for="reviewAmount">Amount Deposited:</label>
+        <input type="text" id="reviewAmount" oninput="updateReview()">
+    </div>
+
+    <button onclick="submitData()">Submit to Google Sheets</button>
+</div>
+
+<script>
+    // 1. Populate Dates dynamically from 15 June 2026 to 1 July 2026
+    const dateSelect = document.getElementById('dateSelect');
+    let startDate = new Date(2026, 5, 15); // June is 5 index
+    let endDate = new Date(2026, 6, 1);    // July is 6 index
+
+    while(startDate <= endDate) {
+        let option = document.createElement('option');
+        let dateString = startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        option.value = dateString;
+        option.text = dateString;
+        dateSelect.appendChild(option);
+        startDate.setDate(startDate.getDate() + 1);
+    }
+
+    // 2. Parse the text block into individual values
+    function parseData() {
+        const rawText = document.getElementById('rawInput').value;
+        const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== "");
+
+        if(lines.length >= 1) document.getElementById('reviewEmail').value = lines[0];
+        if(lines.length >= 2) document.getElementById('reviewAccount').value = lines[1];
+        if(lines.length >= 3) document.getElementById('reviewAmount').value = lines[2];
+    }
+
+    // 3. Send Data to Google Sheets
+    function submitData() {
+        // Replace this URL with your actual Google Apps Script Web App URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyKGz1t3pzA-4xKs8RGrtR4k4u0jh2RxLbhip5OUC0iq_1BtX5MhoM62w45F5s_igRQ/exec';
+        
+        if (scriptURL === 'https://script.google.com/macros/s/AKfycbyKGz1t3pzA-4xKs8RGrtR4k4u0jh2RxLbhip5OUC0iq_1BtX5MhoM62w45F5s_igRQ/exec') {
+            alert("Please provide your Google Web App URL in the code.");
+            return;
+        }
+
+        const payload = {
+            date: document.getElementById('dateSelect').value,
+            source: document.getElementById('sourceSelect').value,
+            email: document.getElementById('reviewEmail').value,
+            account: document.getElementById('reviewAccount').value,
+            amount: document.getElementById('reviewAmount').value
+        };
+
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors', // Essential for Google Script redirection
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alert('Data successfully sent to Google Sheet!');
+            // Clear inputs
+            document.getElementById('rawInput').value = '';
+            document.getElementById('reviewEmail').value = '';
+            document.getElementById('reviewAccount').value = '';
+            document.getElementById('reviewAmount').value = '';
+        })
+        .catch(error => alert('Error sending data: ' + error));
+    }
+</script>
+</body>
+</html>
