@@ -54,10 +54,10 @@
     <h2>Data Entry Form</h2>
     
     <label for="dateSelect">Select Date:</label>
-    <select id="dateSelect" onchange="updateReview()"></select>
+    <select id="dateSelect"></select>
 
     <label for="sourceSelect">Source:</label>
-    <select id="sourceSelect" onchange="updateReview()">
+    <select id="sourceSelect">
         <option value="Support">Support</option>
         <option value="Contactus">Contactus</option>
         <option value="Live chat">Live chat</option>
@@ -72,13 +72,13 @@
         <h3>Review & Edit Options</h3>
         
         <label for="reviewEmail">Email:</label>
-        <input type="text" id="reviewEmail" oninput="updateReview()">
+        <input type="text" id="reviewEmail">
 
         <label for="reviewAccount">Trading Account:</label>
-        <input type="text" id="reviewAccount" oninput="updateReview()">
+        <input type="text" id="reviewAccount">
 
         <label for="reviewAmount">Amount Deposited:</label>
-        <input type="text" id="reviewAmount" oninput="updateReview()">
+        <input type="text" id="reviewAmount">
     </div>
 
     <button onclick="submitData()">Submit to Google Sheets</button>
@@ -87,8 +87,8 @@
 <script>
     // 1. Populate Dates dynamically from 15 June 2026 to 1 July 2026
     const dateSelect = document.getElementById('dateSelect');
-    let startDate = new Date(2026, 5, 15); // June is 5 index
-    let endDate = new Date(2026, 6, 1);    // July is 6 index
+    let startDate = new Date(2026, 5, 15); // June is index 5
+    let endDate = new Date(2026, 6, 1);    // July is index 6
 
     while(startDate <= endDate) {
         let option = document.createElement('option');
@@ -104,20 +104,15 @@
         const rawText = document.getElementById('rawInput').value;
         const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== "");
 
-        if(lines.length >= 1) document.getElementById('reviewEmail').value = lines[0];
-        if(lines.length >= 2) document.getElementById('reviewAccount').value = lines[1];
-        if(lines.length >= 3) document.getElementById('reviewAmount').value = lines[2];
+        // Clear previous configurations if user empties input
+        document.getElementById('reviewEmail').value = lines.length >= 1 ? lines[0] : "";
+        document.getElementById('reviewAccount').value = lines.length >= 2 ? lines[1] : "";
+        document.getElementById('reviewAmount').value = lines.length >= 3 ? lines[2] : "";
     }
 
     // 3. Send Data to Google Sheets
     function submitData() {
-        // Replace this URL with your actual Google Apps Script Web App URL
         const scriptURL = 'https://script.google.com/macros/s/AKfycby8bdmgFyXWmsZYDKUlE4YrfBpyO_qZIL5OGUjgqdYeKP1DP4U4iHoWoUp2_zn43qKc/exec';
-        
-        if (scriptURL === 'https://script.google.com/macros/s/AKfycby8bdmgFyXWmsZYDKUlE4YrfBpyO_qZIL5OGUjgqdYeKP1DP4U4iHoWoUp2_zn43qKc/exec') {
-            alert("https://script.google.com/macros/s/AKfycby8bdmgFyXWmsZYDKUlE4YrfBpyO_qZIL5OGUjgqdYeKP1DP4U4iHoWoUp2_zn43qKc/exec");
-            return;
-        }
 
         const payload = {
             date: document.getElementById('dateSelect').value,
@@ -127,22 +122,23 @@
             amount: document.getElementById('reviewAmount').value
         };
 
+        // Execute background request matrix to Apps Script
         fetch(scriptURL, {
             method: 'POST',
-            mode: 'no-cors', // Essential for Google Script redirection
+            mode: 'no-cors', // Bypasses CORS tracking safely for standard Google Apps Script configurations
             cache: 'no-cache',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
         .then(() => {
             alert('Data successfully sent to Google Sheet!');
-            // Clear inputs
+            // Reset fields on transactional execution success
             document.getElementById('rawInput').value = '';
             document.getElementById('reviewEmail').value = '';
             document.getElementById('reviewAccount').value = '';
             document.getElementById('reviewAmount').value = '';
         })
-        .catch(error => alert('Error sending data: ' + error));
+        .catch(error => alert('Network error or tracking failure: ' + error));
     }
 </script>
 </body>
